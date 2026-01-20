@@ -1,51 +1,65 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Controle de Vendas</title>
+  <meta charset="UTF-8">
+  <title>Controle de Vendas e Comissão</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="style.css">
+  <!-- Estilo -->
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
 <div class="container">
-<h1>Controle de Vendas & Comissão</h1>
+  <h1>📊 Controle de Vendas</h1>
 
-<div class="filtros">
-<select id="mes">
-  <option value="01">Janeiro</option>
-  <option value="02">Fevereiro</option>
-  <option value="03">Março</option>
-</select>
-<input id="ano" type="number" value="2026">
-</div>
+  <!-- Comissão fixa -->
+  <label>Porcentagem de Comissão (%)</label>
+  <input id="porcentagem" type="number" value="2" disabled>
 
-<input id="cliente" placeholder="Cliente">
-<input id="valor" type="number" placeholder="Valor da venda">
+  <div class="mesAno">
+    <select id="mes" onchange="atualizar()">
+      <option value="01">Janeiro</option>
+      <option value="02">Fevereiro</option>
+      <option value="03">Março</option>
+      <option value="04">Abril</option>
+      <option value="05">Maio</option>
+      <option value="06">Junho</option>
+      <option value="07">Julho</option>
+      <option value="08">Agosto</option>
+      <option value="09">Setembro</option>
+      <option value="10">Outubro</option>
+      <option value="11">Novembro</option>
+      <option value="12">Dezembro</option>
+    </select>
 
-<button onclick="adicionar()">Adicionar Venda</button>
+    <input id="ano" type="number" value="2026" onchange="atualizar()">
+  </div>
 
-<h3>💰 Total vendido: R$ <span id="totalVendas">0.00</span></h3>
-<h3>📈 Comissão total: R$ <span id="totalComissao">0.00</span></h3>
+  <hr>
 
-<button onclick="exportarExcel()">📊 Exportar Excel</button>
+  <!-- Cadastro da venda -->
+  <input id="cliente" placeholder="Nome da venda / cliente">
+  <input id="valor" type="number" placeholder="Valor da venda">
 
-<canvas id="grafico"></canvas>
+  <button onclick="adicionar()">➕ Adicionar Venda</button>
 
-<table>
-<thead>
-<tr>
-<th>Cliente</th>
-<th>Venda</th>
-<th>Comissão</th>
-<th>Ação</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
-</table>
+  <!-- Totais -->
+  <h3>Total de Vendas: R$ <span id="totalVendas">0.00</span></h3>
+  <h3>💰 Total de Comissão: R$ <span id="totalComissao">0.00</span></h3>
+
+  <!-- Lista -->
+  <table>
+    <thead>
+      <tr>
+        <th>Venda</th>
+        <th>Valor</th>
+        <th>Comissão</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody id="lista"></tbody>
+  </table>
 </div>
 
 <script src="script.js"></script>
