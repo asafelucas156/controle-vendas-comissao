@@ -2,102 +2,114 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Controle de Vendas e Comissão</title>
 
-  <!-- Estilo -->
-  <link rel="stylesheet" href="style.css">
+  <!-- Estilo simples -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f0f2f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0px 0px 10px #ccc;
+    }
+    input, select, button {
+      padding: 8px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    td button {
+      width: auto;
+      background-color: red;
+    }
+    h3 {
+      margin: 10px 0;
+    }
+  </style>
 </head>
 
 <body>
+  <div class="container">
+    <h1>📊 Controle de Vendas</h1>
 
-<div class="container">
-  <h1>📊 Controle de Vendas</h1>
+    <!-- Comissão fixa -->
+    <label>Porcentagem de Comissão (%)</label>
+    <input id="porcentagem" type="number" value="2" disabled>
 
-  <!-- Comissão fixa -->
-  <label>Porcentagem de Comissão (%)</label>
-  <input id="porcentagem" type="number" value="2" disabled>
+    <!-- Seleção mês e ano -->
+    <div class="mesAno">
+      <select id="mes" onchange="atualizar()">
+        <option value="01">Janeiro</option>
+        <option value="02">Fevereiro</option>
+        <option value="03">Março</option>
+        <option value="04">Abril</option>
+        <option value="05">Maio</option>
+        <option value="06">Junho</option>
+        <option value="07">Julho</option>
+        <option value="08">Agosto</option>
+        <option value="09">Setembro</option>
+        <option value="10">Outubro</option>
+        <option value="11">Novembro</option>
+        <option value="12">Dezembro</option>
+      </select>
+      <input id="ano" type="number" value="2026" onchange="atualizar()">
+    </div>
 
-  <div class="mesAno">
-    <select id="mes" onchange="atualizar()">
-      <option value="01">Janeiro</option>
-      <option value="02">Fevereiro</option>
-      <option value="03">Março</option>
-      <option value="04">Abril</option>
-      <option value="05">Maio</option>
-      <option value="06">Junho</option>
-      <option value="07">Julho</option>
-      <option value="08">Agosto</option>
-      <option value="09">Setembro</option>
-      <option value="10">Outubro</option>
-      <option value="11">Novembro</option>
-      <option value="12">Dezembro</option>
-    </select>
+    <hr>
 
-    <input id="ano" type="number" value="2026" onchange="function atualizar() {
-  const mes = document.getElementById("mes").value;
-  const ano = document.getElementById("ano").value;
-  const lista = document.getElementById("lista");
+    <!-- Cadastro da venda -->
+    <input id="cliente" placeholder="Nome da venda / cliente">
+    <input id="valor" type="number" placeholder="Valor da venda">
+    <button onclick="adicionar()">➕ Adicionar Venda</button>
 
-  lista.innerHTML = "";
+    <!-- Totais -->
+    <h3>Total de Vendas: R$ <span id="totalVendas">0.00</span></h3>
+    <h3>💰 Total de Comissão: R$ <span id="totalComissao">0.00</span></h3>
 
-  let totalVendas = 0;
-  let totalComissao = 0;
-
-  // FILTRA PRIMEIRO
-  const vendasFiltradas = vendas.filter(v =>
-    v.mes === mes && v.ano === ano
-  );
-
-  vendasFiltradas.forEach(v => {
-    const valor = Number(v.valor);
-    const comissao = valor * (COMISSAO / 100);
-
-    totalVendas += valor;
-    totalComissao += comissao;
-
-    lista.innerHTML += `
-      <tr>
-        <td>${v.cliente}</td>
-        <td>R$ ${valor.toFixed(2)}</td>
-        <td>R$ ${comissao.toFixed(2)}</td>
-        <td>
-          <button onclick="removerVenda('${v.cliente}', ${valor})">❌</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  document.getElementById("totalVendas").innerText = totalVendas.toFixed(2);
-  document.getElementById("totalComissao").innerText = totalComissao.toFixed(2);
-}
+    <!-- Lista de vendas -->
+    <table>
+      <thead>
+        <tr>
+          <th>Venda</th>
+          <th>Valor</th>
+          <th>Comissão</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
   </div>
 
-  <hr>
-
-  <!-- Cadastro da venda -->
-  <input id="cliente" placeholder="Nome da venda / cliente">
-  <input id="valor" type="number" placeholder="Valor da venda">
-
-  <button onclick="adicionar()">➕ Adicionar Venda</button>
-
-  <!-- Totais -->
-  <h3>Total de Vendas: R$ <span id="totalVendas">0.00</span></h3>
-  <h3>💰 Total de Comissão: R$ <span id="totalComissao">0.00</span></h3>
-
-  <!-- Lista -->
-  <table>
-    <thead>
-      <tr>
-        <th>Venda</th>
-        <th>Valor</th>
-        <th>Comissão</th>
-        <th>Ação</th>
-      </tr>
-    </thead>
-    <tbody id="lista"></tbody>
-  </table>
-</div>
-
-<script src="script.js"></script>
+  <!-- JS -->
+  <script src="script.js"></script>
 </body>
 </html>
