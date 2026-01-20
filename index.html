@@ -33,7 +33,43 @@
       <option value="12">Dezembro</option>
     </select>
 
-    <input id="ano" type="number" value="2026" onchange="atualizar()">
+    <input id="ano" type="number" value="2026" onchange="function atualizar() {
+  const mes = document.getElementById("mes").value;
+  const ano = document.getElementById("ano").value;
+  const lista = document.getElementById("lista");
+
+  lista.innerHTML = "";
+
+  let totalVendas = 0;
+  let totalComissao = 0;
+
+  // FILTRA PRIMEIRO
+  const vendasFiltradas = vendas.filter(v =>
+    v.mes === mes && v.ano === ano
+  );
+
+  vendasFiltradas.forEach(v => {
+    const valor = Number(v.valor);
+    const comissao = valor * (COMISSAO / 100);
+
+    totalVendas += valor;
+    totalComissao += comissao;
+
+    lista.innerHTML += `
+      <tr>
+        <td>${v.cliente}</td>
+        <td>R$ ${valor.toFixed(2)}</td>
+        <td>R$ ${comissao.toFixed(2)}</td>
+        <td>
+          <button onclick="removerVenda('${v.cliente}', ${valor})">❌</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("totalVendas").innerText = totalVendas.toFixed(2);
+  document.getElementById("totalComissao").innerText = totalComissao.toFixed(2);
+}
   </div>
 
   <hr>
