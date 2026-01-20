@@ -4,201 +4,145 @@
 <meta charset="UTF-8">
 <title>Controle de Vendas e Comissão</title>
 
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f2f2f2;
-  padding: 20px;
-}
-.container {
-  max-width: 1000px;
-  margin: auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-}
-h1 {
-  text-align: center;
-}
-input, select, button {
-  width: 100%;
-  padding: 10px;
-  margin: 6px 0;
-}
-button {
-  background: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-button:hover {
-  background: #0056b3;
-}
-.card {
-  background: #fafafa;
-  padding: 15px;
-  border-radius: 10px;
-  margin-top: 15px;
-}
-.resumo {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.box {
-  flex: 1;
-  background: #fff;
-  padding: 15px;
-  border-radius: 10px;
-  text-align: center;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-}
-th {
-  background: #007bff;
-  color: white;
-}
-.excluir {
-  background: #dc3545;
-}
-.excluir:hover {
-  background: #b52a37;
-}
-</style>
-</head>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<body>
+/* 🔴 COLE AQUI SEU firebaseConfig */
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_PROJETO.firebaseapp.com",
+  projectId: "SEU_PROJETO",
+};
 
-<div class="container">
-<h1>📊 Controle de Vendas & Comissão</h1>
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-<!-- CONFIG -->
-<div class="card">
-<h3>Configuração da Comissão</h3>
-<input id="percentual" type="number" value="5">
-<p>Porcentagem de comissão (%)</p>
-</div>
+/* 🔐 LOGIN */
+window.login = async () => {
+  const email = emailInput.value;
+  const senha = senhaInput.value;
 
-<!-- FILTRO -->
-<div class="card">
-<h3>Mês de Referência</h3>
-<select id="mes">
-  <option value="01">Janeiro</option>
-  <option value="02">Fevereiro</option>
-  <option value="03">Março</option>
-  <option value="04">Abril</option>
-  <option value="05">Maio</option>
-  <option value="06">Junho</option>
-  <option value="07">Julho</option>
-  <option value="08">Agosto</option>
-  <option value="09">Setembro</option>
-  <option value="10">Outubro</option>
-  <option value="11">Novembro</option>
-  <option value="12">Dezembro</option>
-</select>
-<input id="ano" type="number" value="2026">
-</div>
+  try {
+    await signInWithEmailAndPassword(auth, email, senha);
+  } catch {
+    await createUserWithEmailAndPassword(auth, email, senha);
+  }
+};
 
-<!-- NOVA VENDA -->
-<div class="card">
-<h3>Nova Venda</h3>
-<input id="cliente" placeholder="Nome do cliente">
-<input id="valor" type="number" placeholder="Valor da venda">
-<button onclick="adicionar()">Adicionar Venda</button>
-</div>
+/* 🔄 ESTADO */
+onAuthStateChanged(auth, user => {
+  if (user) {
+    loginDiv.style.display = "none";
+    sistema.style.display = "block";
+    carregar();
+  }
+});
 
-<!-- RESUMO -->
-<div class="card resumo">
-  <div class="box">
-    <h3>Total Vendido</h3>
-    <p>R$ <span id="totalVendido">0</span></p>
-  </div>
-  <div class="box">
-    <h3>Total Comissão</h3>
-    <p>R$ <span id="totalComissao">0</span></p>
-  </div>
-</div>
-
-<!-- LISTA -->
-<div class="card">
-<h3>Vendas do Mês</h3>
-<table>
-<thead>
-<tr>
-<th>Cliente</th>
-<th>Venda</th>
-<th>%</th>
-<th>Comissão</th>
-<th>Ação</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
-</table>
-</div>
-
-</div>
-
-<script>
-let vendas = JSON.parse(localStorage.getItem("vendasComissao")) || [];
-
-function adicionar() {
-  vendas.push({
-    cliente: cliente.value,
-    valor: +valor.value,
-    mes: mes.value,
-    ano: ano.value
-  });
-  salvar();
-}
-
-function excluir(i) {
-  vendas.splice(i, 1);
-  salvar();
-}
-
-function salvar() {
-  localStorage.setItem("vendasComissao", JSON.stringify(vendas));
-  atualizar();
-}
-
-function atualizar() {
+/* 📥 CARREGAR */
+async function carregar() {
   lista.innerHTML = "";
+  totalVendido.innerText = "0";
+  totalComissao.innerText = "0";
+
+  const ref = collection(db, "usuarios", auth.currentUser.uid, "vendas");
+  const snap = await getDocs(ref);
+
   let total = 0;
   let comissao = 0;
-  const perc = +percentual.value;
+  const perc = +percentual.value || 0;
 
-  const filtrado = vendas.filter(v => v.mes === mes.value && v.ano == ano.value);
+  snap.forEach(d => {
+    const v = d.data();
+    if (v.mes === mes.value && v.ano == ano.value) {
+      const c = v.valor * (perc / 100);
+      total += v.valor;
+      comissao += c;
 
-  filtrado.forEach((v, i) => {
-    const c = v.valor * (perc / 100);
-    total += v.valor;
-    comissao += c;
-
-    lista.innerHTML += `
-      <tr>
-        <td>${v.cliente}</td>
-        <td>R$ ${v.valor.toFixed(2)}</td>
-        <td>${perc}%</td>
-        <td>R$ ${c.toFixed(2)}</td>
-        <td><button class="excluir" onclick="excluir(${i})">Excluir</button></td>
-      </tr>`;
+      lista.innerHTML += `
+        <tr>
+          <td>${v.cliente}</td>
+          <td>R$ ${v.valor.toFixed(2)}</td>
+          <td>${perc}%</td>
+          <td>R$ ${c.toFixed(2)}</td>
+          <td><button onclick="excluir('${d.id}')">Excluir</button></td>
+        </tr>`;
+    }
   });
 
   totalVendido.innerText = total.toFixed(2);
   totalComissao.innerText = comissao.toFixed(2);
 }
 
-atualizar();
+/* ➕ ADD */
+window.adicionar = async () => {
+  await addDoc(collection(db, "usuarios", auth.currentUser.uid, "vendas"), {
+    cliente: cliente.value,
+    valor: +valor.value,
+    mes: mes.value,
+    ano: ano.value
+  });
+  carregar();
+};
+
+/* ❌ EXCLUIR */
+window.excluir = async (id) => {
+  await deleteDoc(doc(db, "usuarios", auth.currentUser.uid, "vendas", id));
+  carregar();
+};
+
+window.atualizar = carregar;
 </script>
+
+<style>
+body { font-family: Arial; background: #f2f2f2; padding: 20px; }
+.container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; }
+input, select, button { width: 100%; padding: 10px; margin: 5px 0; }
+button { background: #007bff; color: #fff; border: none; border-radius: 5px; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+th { background: #007bff; color: white; }
+</style>
+</head>
+
+<body>
+
+<div class="container" id="loginDiv">
+<h2>Login</h2>
+<input id="emailInput" placeholder="Email">
+<input id="senhaInput" type="password" placeholder="Senha">
+<button onclick="login()">Entrar / Criar Conta</button>
+</div>
+
+<div class="container" id="sistema" style="display:none">
+<h1>Controle de Vendas & Comissão</h1>
+
+<input id="percentual" type="number" placeholder="Comissão (%)">
+
+<select id="mes" onchange="atualizar()">
+  <option value="01">Janeiro</option>
+  <option value="02">Fevereiro</option>
+  <option value="03">Março</option>
+</select>
+
+<input id="ano" type="number" value="2026" onchange="atualizar()">
+
+<input id="cliente" placeholder="Cliente">
+<input id="valor" type="number" placeholder="Valor da venda">
+<button onclick="adicionar()">Adicionar Venda</button>
+
+<h3>Total Vendido: R$ <span id="totalVendido">0</span></h3>
+<h3>Total Comissão: R$ <span id="totalComissao">0</span></h3>
+
+<table>
+<thead>
+<tr><th>Cliente</th><th>Venda</th><th>%</th><th>Comissão</th><th>Ação</th></tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+</div>
 
 </body>
 </html>
